@@ -2,7 +2,7 @@ const app = require('express')();
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cors = require('cors');
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3027;
 
 app.use(morgan('dev'));
 app.use(cors());
@@ -31,6 +31,14 @@ app.post("/simple", (request, response) => {
 //     return response.raw();
 //   });
 
+//Tasks:
+// 1. Define a route for handling a HTTP POST request
+
+// 2. Get the image from the request, possibly storing it somewhere before proceeding.
+
+// 3. Process the image using the JHLabs filtering library (you have to add the dependency)
+
+// 4. Write the processed image to the HTTP response ( Tip: response.raw() can be helpful)
 
 
 app.listen(port, () =>{

@@ -2,71 +2,68 @@
 
 const router = require("express").Router();
 const _ = require('lodash');
-
+const fs = require('fs');
+const uploadDir = 'uploads/';
+const path = require('path');
 const multer = require('multer');
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const jimp = require('jimp');
+var storage = multer.diskStorage({
+	destination: (req, file, cb) => {
+	  cb(null, uploadDir)
+	},
+	filename: (req, file, cb) => {
+	  cb(null, file.originalname)
+	}
+});
+
+var formatFile = (fileLocation)=>{
+    jimp.read(fileLocation).then((image)=>{
+      image.blur(100).write(fileLocation);
+    }).catch((err)=>{
+       throw console.error("Error Blurring the image");
+    })
+};
+
+// var upload = multer({ //multer settings
+//     storage: storage,
+//     fileFilter: function (req, file, callback) {
+//         var ext = path.extname(file.originalname);
+//         if(ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
+//             return callback(new Error('Only images are allowed'))
+//         }
+//         callback(null, true)
+//     },
+//     limits:{
+//         fileSize: 1024 * 1024
+//     }
+// }).single('profilepic');
+ 
+var upload = multer({storage: storage});
 
 router.get('/:id', (req, res, next)=>{
-    var DocumentID = req.params.id;
+    var filename = req.params.id;
 
-    db.Fo_Resource.findById(DocumentID)
-        .then(function (result) {
-
-            res.writeHead(200, {
-                'Content-Type': result.FileType,
-                'Content-Disposition': 'attachment; filename='+result.FileName,
-                'Content-Length': result.FileSize
-            });
-            res.end(result.ResDocument);
-
-        }).catch(function (e) {
-        debugger;
-        res.status(400).send(e);
-    })
+    var fileLocation = path.join('./uploads',filename);
+    console.log(fileLocation);
+    res.download(fileLocation, file); 
 })
 
-router.post('/', upload.any(), (req, res, next) => {
-    debugger;
-    //let DocumentID =  req.body['DocumentID'];
-    //let DocIdAndName = req.body[key].DocumentID.split('#');
+router.post('/', upload.single("file"), (req, res, next) => {
 
-    if(!req.files.length){
+    if(!req.file){
         res.send('There is no new Attached file');
-        //return;
     }
 
-    let documentIdArray = req.body["DocumentID"];
-    let docIdArray = [];
-    if(typeof documentIdArray === "string") {
-        docIdArray.push(documentIdArray);
-    }else{
-        _.map(documentIdArray, (val)=> docIdArray.push(val));
-    }
+    let fileItem = req.file;
+    let filename = fileItem.filename
 
-    let functionArray = [];
-        _.map( docIdArray, (val, key) => {
-            let DocIdAndField = val.split('***');
-            let docId = DocIdAndField[0];
-            let docFieldName = DocIdAndField[1];
-            let fileItem = _.filter(req.files, {'fieldname': docFieldName});
-            if(docId && docFieldName){
-            functionArray.push(
-                db.Fo_Resource.update({ ResDocument: fileItem[0].buffer},
-                {where:{
-                    'DocumentID': docId
-                }}));
-            }
-        });
+    var fileLocation = path.join('./uploads',filename);
+
+    formatFile(fileLocation)
+
+    res.send(filename);
+});
 
 
-    Promise.all(functionArray)
-        .then((updatedCount)=>{
-            res.send(updatedCount);
-        }).catch(function (e) {
-        debugger;
-        res.status(400).send(e);
-        });
-})
 
 module.exports = router;
