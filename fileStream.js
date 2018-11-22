@@ -23,29 +23,15 @@ var formatFile = (fileLocation)=>{
        throw console.error("Error Blurring the image");
     })
 };
-
-// var upload = multer({ //multer settings
-//     storage: storage,
-//     fileFilter: function (req, file, callback) {
-//         var ext = path.extname(file.originalname);
-//         if(ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
-//             return callback(new Error('Only images are allowed'))
-//         }
-//         callback(null, true)
-//     },
-//     limits:{
-//         fileSize: 1024 * 1024
-//     }
-// }).single('profilepic');
  
 var upload = multer({storage: storage});
 
 router.get('/:id', (req, res, next)=>{
     var filename = req.params.id;
 
-    var fileLocation = path.join('./uploads',filename);
+    var fileLocation = path.join(uploadDir, filename);
     console.log(fileLocation);
-    res.download(fileLocation, file); 
+    res.download(fileLocation, filename); 
 })
 
 router.post('/', upload.single("file"), (req, res, next) => {
@@ -57,11 +43,12 @@ router.post('/', upload.single("file"), (req, res, next) => {
     let fileItem = req.file;
     let filename = fileItem.filename
 
-    var fileLocation = path.join('./uploads',filename);
+    var fileLocation = path.join(uploadDir , filename);
 
     formatFile(fileLocation)
 
-    res.send(filename);
+    res.download(fileLocation, filename); 
+    //res.send(filename);
 });
 
 
